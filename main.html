@@ -25,6 +25,16 @@
             padding: 10px;
             box-sizing: border-box;
         }
+        #who_doesnt_follow_back_table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #who_doesnt_follow_back_table th, #who_doesnt_follow_back_table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +52,7 @@
         function compareFiles() {
             const leftFileInput = document.getElementById("leftUpload");
             const rightFileInput = document.getElementById("rightUpload");
+            const resultDiv = document.getElementById("who_doesnt_follow_back");
 
             if (leftFileInput.files.length === 0 || rightFileInput.files.length === 0) {
                 alert("Please select two JSON files for comparison.");
@@ -71,8 +82,27 @@
                     // Compare the lists and find values in following but not in followers
                     const followingButNotFollowingBackList = followingList.filter(value => !followerList.includes(value));
 
-                    // Print the result
-                    alert("Following but not following back: " + JSON.stringify(followingButNotFollowingBackList));
+                    // Create a table with the result
+                    const table = document.createElement("table");
+                    table.id = "who_doesnt_follow_back_table";
+
+                    const headerRow = table.insertRow(0);
+                    const headerCell1 = headerRow.insertCell(0);
+                    headerCell1.innerHTML = "Number";
+                    const headerCell2 = headerRow.insertCell(1);
+                    headerCell2.innerHTML = "Name";
+
+                    for (let i = 0; i < followingButNotFollowingBackList.length; i++) {
+                        const row = table.insertRow(i + 1);
+                        const cell1 = row.insertCell(0);
+                        cell1.innerHTML = i + 1;
+                        const cell2 = row.insertCell(1);
+                        cell2.innerHTML = followingButNotFollowingBackList[i];
+                    }
+
+                    // Replace the content of the result div with the table
+                    resultDiv.innerHTML = "";
+                    resultDiv.appendChild(table);
                 };
 
                 rightReader.readAsText(rightFile);
