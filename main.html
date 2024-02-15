@@ -1,55 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parse JSON in Browser</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        #leftUpload, #rightUpload {
+            width: 45%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #compareBtn {
+            width: 200px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+    </style>
 </head>
 <body>
+    <h1>File Comparison</h1>
+    
+    <div id="container">
+        <input type="file" id="leftUpload" accept=".json">
+        <input type="file" id="rightUpload" accept=".json">
+    </div>
+    
+    <button id="compareBtn" onclick="compareFiles()">Compare</button>
+    <div id="who_doesnt_follow_back"></div>
 
-<input type="file" id="jsonFileInput" accept=".json" onchange="handleFileSelect(event)">
-<div id="output"></div>
+    <script>
+        function compareFiles() {
+            const leftFileInput = document.getElementById("leftUpload");
+            const rightFileInput = document.getElementById("rightUpload");
 
-<script>
-  // Function to parse JSON and extract values
-  function parseJson(jsonData) {
-    const userList = [];
-    if (Array.isArray(jsonData)) {
-      for (const entry of jsonData) {
-        for (const stringData of entry.string_list_data) {
-          userList.push(stringData.value);
+            if (leftFileInput.files.length === 0 || rightFileInput.files.length === 0) {
+                alert("Please select two JSON files for comparison.");
+                return;
+            }
+
+            const leftFile = leftFileInput.files[0];
+            const rightFile = rightFileInput.files[0];
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const leftData = JSON.parse(e.target.result);
+
+                // Extract values from the left data
+                const followerList = leftData.map(item => item.string_list_data[0].value);
+
+                // Now read the right file
+                const rightReader = new FileReader();
+
+                rightReader.onload = function(e) {
+                    const rightData = JSON.parse(e.target.result);
+
+                    // Extract values from the right data
+                    const followingList = rightData.relationships_following.map(item => item.string_list_data[0].value);
+
+                    // Compare the lists and find values in following but not in followers
+                    const followingButNotFollowingBackList = followingList.filter(value => !followerList.includes(value));
+
+                    // Print the result
+                    alert("Following but not following back: " + JSON.stringify(followingButNotFollowingBackList));
+                };
+
+                rightReader.readAsText(rightFile);
+            };
+
+            reader.readAsText(leftFile);
         }
-      }
-    } else {
-      for (const entry of jsonData.relationships_following) {
-        for (const stringData of entry.string_list_data) {
-          userList.push(stringData.value);
-        }
-      }
-    }
-    return userList;
-  }
-
-  // Function to handle file selection
-  function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const jsonData = JSON.parse(e.target.result);
-        const userList = parseJson(jsonData);
-        displayUserList(userList);
-      };
-      reader.readAsText(file);
-    }
-  }
-
-  // Function to display user list
-  function displayUserList(userList) {
-    const outputDiv = document.getElementById('output');
-    outputDiv.innerHTML = '<p>List of users:</p><ul>' + userList.map(user => `<li>${user}</li>`).join('') + '</ul>';
-  }
-</script>
-
+    </script>
 </body>
 </html>
