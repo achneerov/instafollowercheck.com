@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parse JSON in Browser</title>
+</head>
+<body>
+
+<input type="file" id="jsonFileInput" accept=".json" onchange="handleFileSelect(event)">
+<div id="output"></div>
+
+<script>
+  // Function to parse JSON and extract values
+  function parseJson(jsonData) {
+    const userList = [];
+    if (Array.isArray(jsonData)) {
+      for (const entry of jsonData) {
+        for (const stringData of entry.string_list_data) {
+          userList.push(stringData.value);
+        }
+      }
+    } else {
+      for (const entry of jsonData.relationships_following) {
+        for (const stringData of entry.string_list_data) {
+          userList.push(stringData.value);
+        }
+      }
+    }
+    return userList;
+  }
+
+  // Function to handle file selection
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const jsonData = JSON.parse(e.target.result);
+        const userList = parseJson(jsonData);
+        displayUserList(userList);
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  // Function to display user list
+  function displayUserList(userList) {
+    const outputDiv = document.getElementById('output');
+    outputDiv.innerHTML = '<p>List of users:</p><ul>' + userList.map(user => `<li>${user}</li>`).join('') + '</ul>';
+  }
+</script>
+
+</body>
+</html>
