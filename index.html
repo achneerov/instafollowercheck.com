@@ -4,19 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Comparison</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .form-control {
+            height: 58px; /* You can adjust this value as needed */
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 1;
+        }
+
+        .header {
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #084cdf; /* Bootstrap dark background color */
+            color: #ffffff; /* Bootstrap light text color */
+        }
+
+        .header a {
+            color: #ffffff; /* Bootstrap light link color */
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        
+    </style>
 </head>
-<body>
-    <h1>Who doesn't follow back?</h1>
-    <h2>See the about section for how it works</h2>    
-    <div id="container">
-        <input type="file" id="leftUpload" accept=".json">
-        <input type="file" id="rightUpload" accept=".json">
-        <button id="compareBtn" onclick="compareFiles()">Compare</button>
+<body class="bg-light">
+    <div class="header">
+        <a href="index.html">Home</a>
+        <a href="guide.html">Guide</a>
     </div>
-    
-    
-    <div id="who_doesnt_follow_back"></div>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">Who doesn't follow back on Instagram?</h1>
+        <h2 class="mb-4 text-center">See <a href="https://www.tiktok.com/example" target="_blank" rel="noopener noreferrer">this TikTok</a> for how it works, or read <a href="guide.html">this guide</a></h2>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                Place followers file here, it may be labeled "followers_1.json"
+                <input type="file" class="form-control" id="leftUpload" accept=".json">
+            </div>
+            <div class="col-md-6 mb-3">
+                Place following file here, it may be labeled "following.json"
+                <input type="file" class="form-control" id="rightUpload" accept=".json">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 mb-3 text-center">
+                <button class="btn btn-primary btn-lg" style="background-color: #23ae6d;" onclick="compareFiles()">Compare</button>
+            </div>
+        </div>
+        
+    </div>
+    <div id="who_doesnt_follow_back" class="mt-4"></div>
+    <div class="mt-5 border-top pt-3"></div>
+    <footer class="text-center mt-3">
+        <p>&copy; Who doesn't follow back on Instagram? All rights reserved.</p>
+        <p>Created by Alexander Chneerov</p>
+    </footer>
 
     <script src="script.js"></script>
 </body>

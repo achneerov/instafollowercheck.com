@@ -1,48 +1,14 @@
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 20px;
-}
-
-#container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px; /* You can adjust the gap between columns as needed */
-}
-
-#leftUpload {
-    grid-column: 2 / span 1; /* Placing leftUpload in the second column */
-}
-
-#rightUpload {
-    grid-column: 4 / span 1; /* Placing rightUpload in the fourth column */
-}
-
-/* Optional: You can adjust the styling for leftUpload and rightUpload as needed */
-#leftUpload, #rightUpload {
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-#compareBtn {
-    grid-column: 3 / span 1; /* Placing compareBtn in the third column */
-    width: 200px;
-    padding: 10px;
-    box-sizing: border-box;
-    margin-top: 30vh; /* 50% of the viewport height from the top */
-    transform: translateY(-50%); /* Centering vertically */
-}
-
-#who_doesnt_follow_back_table {
-    margin-top: 20px;
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#who_doesnt_follow_back_table th,
-#who_doesnt_follow_back_table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
+input[type=file]::file-selector-button {
+    margin-right: 20px;
+    border: none;
+    background: #084cdf;
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: background .2s ease-in-out;
+  }
+  
+  input[type=file]::file-selector-button:hover {
+    background: #0d45a5;
+  }
