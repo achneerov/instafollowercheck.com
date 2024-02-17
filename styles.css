@@ -7,8 +7,40 @@ input[type=file]::file-selector-button {
     color: #fff;
     cursor: pointer;
     transition: background .2s ease-in-out;
-  }
+}
   
-  input[type=file]::file-selector-button:hover {
-    background: #0d45a5;
-  }
+input[type=file]::file-selector-button:hover {
+  background: #0d45a5;
+}
+.form-control {
+  height: 58px; /* You can adjust this value as needed */
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    flex: 1;
+}
+
+.header {
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #084cdf; /* Bootstrap dark background color */
+    color: #ffffff; /* Bootstrap light text color */
+}
+
+.header a {
+    color: #ffffff; /* Bootstrap light link color */
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+img {
+    max-width: 80%;
+    height: auto;
+}
+

@@ -3,41 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Comparison</title>
+    <title>Who doesn't follow back on Instagram?</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .form-control {
-            height: 58px; /* You can adjust this value as needed */
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .container {
-            flex: 1;
-        }
-
-        .header {
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: #084cdf; /* Bootstrap dark background color */
-            color: #ffffff; /* Bootstrap light text color */
-        }
-
-        .header a {
-            color: #ffffff; /* Bootstrap light link color */
-            text-decoration: none;
-            margin: 0 10px;
-        }
-        
-    </style>
 </head>
 <body class="bg-light">
     <div class="header">
@@ -63,9 +34,13 @@
                 <button class="btn btn-primary btn-lg" style="background-color: #23ae6d;" onclick="compareFiles()">Compare</button>
             </div>
         </div>
-        
+        <div class="row">
+            <div class="col-md-12 mb-3 text-center">
+                <div id="who_doesnt_follow_back"></div>
+            </div>
+        </div>
     </div>
-    <div id="who_doesnt_follow_back" class="mt-4"></div>
+
     <div class="mt-5 border-top pt-3"></div>
     <footer class="text-center mt-3">
         <p>&copy; Who doesn't follow back on Instagram? All rights reserved.</p>
