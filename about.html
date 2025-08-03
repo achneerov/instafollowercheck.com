@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>About Us - Who doesn't follow back on Instagram?</title>
+        <title>About Us</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script
             async
@@ -11,60 +11,60 @@
             crossorigin="anonymous"
         ></script>
     </head>
-
     <body class="bg-gray-100 min-h-screen flex flex-col">
         <header class="bg-blue-500 shadow">
-            <nav class="container mx-auto flex justify-center py-4">
-                <a href="index.html" class="mx-4 text-white hover:text-gray-200"
-                    >Home</a
+            <nav class="container mx-auto flex justify-center items-center py-4">
+                <a href="index.html" class="mx-4 px-3 py-2 bg-blue-700 text-white font-semibold rounded-md border-2 border-white hover:bg-blue-800 hover:border-gray-200"
+                    >🔍 Check</a
                 >
                 <a
                     href="guide-desktop.html"
-                    class="mx-4 text-white hover:text-gray-200"
+                    class="mx-4 px-3 py-2 text-white hover:text-gray-200"
                     >Desktop Guide</a
                 >
                 <a
                     href="guide-mobile.html"
-                    class="mx-4 text-white hover:text-gray-200"
+                    class="mx-4 px-3 py-2 text-white hover:text-gray-200"
                     >Mobile Guide</a
-                >
-                <a href="news.html" class="mx-4 text-white hover:text-gray-200"
-                    >News</a
-                >
-                <a href="about.html" class="mx-4 text-white hover:text-gray-200"
-                    >About</a
                 >
             </nav>
         </header>
 
         <main class="container mx-auto px-4 mt-10 flex-grow">
-            <h1 class="text-3xl font-bold text-center mb-8">About Us</h1>
-
-            <section class="space-y-6">
-                <p class="text-lg text-gray-700">
-                    I created this website because I found it difficult to
-                    locate a reliable tool to check who doesn't follow you back.
-                    Most websites I came across either asked for your username
-                    and password (which I’m not comfortable sharing with random
-                    sites) or required payment. Some even used scrapers, which
-                    violate Instagram's Terms of Service, or demanded access to
-                    all your information and sent it to external servers.
-                </p>
-
-                <p class="text-lg text-gray-700">
-                    My website is different: it only requires two files—your
-                    followers and following lists, which you can review
-                    yourself. Nothing sensitive is involved, and no data is sent
-                    to any server. All computations are done locally on your
-                    device, so you could even use the site in airplane mode.
-                </p>
-            </section>
+            <div class="bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold text-center mb-6">About This Tool</h1>
+                <div class="space-y-4 text-lg text-gray-700">
+                    <p>
+                        Have you ever wondered which accounts you follow on Instagram don't follow you back? Manually checking can be a tedious and time-consuming process, especially if you follow hundreds or thousands of people. This website was created to solve that exact problem.
+                    </p>
+                    <p>
+                        Our tool provides a simple, fast, and secure way to compare your "followers" and "following" lists. By using the data files you can download directly from Instagram, our tool instantly generates a list of users who do not follow you back.
+                    </p>
+                    <h2 class="text-2xl font-semibold pt-4">Your Privacy is Our Priority</h2>
+                    <p>
+                        We take your privacy very seriously. The entire comparison process happens directly in your web browser. This means your Instagram data files are <strong class="font-semibold">never uploaded to our server</strong> or seen by anyone else. Everything is processed on your own computer, ensuring your information remains completely private and secure.
+                    </p>
+                    <p>
+                        This project was created with the goal of providing a straightforward and useful utility for Instagram users. We are committed to maintaining a user-friendly and trustworthy service.
+                    </p>
+                    <p>
+                        If you have any questions, please visit our <a href="contact-us.html" class="text-blue-500 hover:underline">Contact Us</a> page.
+                    </p>
+                </div>
+            </div>
         </main>
 
-        <footer class="border-t border-gray-300 pt-6 pb-4">
-            <div class="text-center space-y-2">
-                <p class="text-gray-600">&copy; 2025. All rights reserved.</p>
-                <p class="text-gray-600">Created by Alexander Chneerov</p>
+        <footer class="border-t border-gray-300 pt-6 pb-4 mt-10">
+            <div class="text-center space-y-4">
+                <div class="flex justify-center space-x-6">
+                    <a href="about.html" class="text-blue-500 hover:underline">About</a>
+                    <a href="contact-us.html" class="text-blue-500 hover:underline">Contact Us</a>
+                    <a href="terms-of-service.html" class="text-blue-500 hover:underline">Terms of Service</a>
+                    <a href="privacy-policy.html" class="text-blue-500 hover:underline">Privacy Policy</a>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-600">© 2025. All rights reserved. Created by Alex with ❤️</p>
+                </div>
             </div>
         </footer>
     </body>
