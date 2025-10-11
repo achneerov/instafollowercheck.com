@@ -139,12 +139,8 @@ function processFiles(files, accumulator, callback) {
         if (data.relationships_following) {
           // Process relationships_following structure
           data.relationships_following.forEach((item) => {
-            if (
-              item.string_list_data &&
-              item.string_list_data[0] &&
-              item.string_list_data[0].value
-            ) {
-              accumulator.push(item.string_list_data[0].value);
+            if (item.title) {
+              accumulator.push(item.title);
             }
           });
         } else {
