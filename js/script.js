@@ -140,7 +140,11 @@ function processFiles(files, accumulator, callback) {
           // Process relationships_following structure
           data.relationships_following.forEach((item) => {
             if (item.title) {
-              accumulator.push(item.title);
+              accumulator.push({
+                username: item.title,
+                timestamp: item.string_list_data?.[0]?.timestamp || null,
+                href: item.string_list_data?.[0]?.href || null,
+              });
             }
           });
         } else {
@@ -151,7 +155,11 @@ function processFiles(files, accumulator, callback) {
               item.string_list_data[0] &&
               item.string_list_data[0].value
             ) {
-              accumulator.push(item.string_list_data[0].value);
+              accumulator.push({
+                username: item.string_list_data[0].value,
+                timestamp: item.string_list_data[0].timestamp || null,
+                href: item.string_list_data[0].href || null,
+              });
             }
           });
         }
@@ -175,14 +183,42 @@ function processFiles(files, accumulator, callback) {
 function compareUsersAndDisplayResults(followerList, followingList) {
   const resultDiv = document.getElementById("who_doesnt_follow_back");
 
-  // Make sure we have unique usernames only
-  const uniqueFollowers = [...new Set(followerList)];
-  const uniqueFollowing = [...new Set(followingList)];
+  // Create maps for quick lookup with all data
+  const followersMap = new Map();
+  followerList.forEach((item) => {
+    if (!followersMap.has(item.username)) {
+      followersMap.set(item.username, item);
+    }
+  });
+
+  const followingMap = new Map();
+  followingList.forEach((item) => {
+    if (!followingMap.has(item.username)) {
+      followingMap.set(item.username, item);
+    }
+  });
 
   // Find users you follow who don't follow you back
-  const followingButNotFollowingBackList = uniqueFollowing.filter(
-    (user) => !uniqueFollowers.includes(user),
-  );
+  const notFollowingBackList = [];
+  followingMap.forEach((followingUser, username) => {
+    if (!followersMap.has(username)) {
+      notFollowingBackList.push(followingUser);
+    }
+  });
+
+  // Find mutual followers with who followed first data
+  const mutualFollowersList = [];
+  followingMap.forEach((followingUser, username) => {
+    if (followersMap.has(username)) {
+      const followerUser = followersMap.get(username);
+      mutualFollowersList.push({
+        username: username,
+        youFollowedTimestamp: followingUser.timestamp,
+        theyFollowedTimestamp: followerUser.timestamp,
+        href: followingUser.href,
+      });
+    }
+  });
 
   // Display summary statistics
   const statsDiv = document.createElement("div");
@@ -190,23 +226,82 @@ function compareUsersAndDisplayResults(followerList, followingList) {
 
   statsDiv.innerHTML = `
         <p class="text-lg mb-2">
-            <b>Total followers:</b> ${uniqueFollowers.length} |
-            <b>Total following:</b> ${uniqueFollowing.length}
+            <b>Total followers:</b> ${followersMap.size} |
+            <b>Total following:</b> ${followingMap.size}
         </p>
         <p class="text-lg mb-4">
-            <b>Users not following you back:</b> ${followingButNotFollowingBackList.length}
-            (${Math.round((followingButNotFollowingBackList.length / uniqueFollowing.length) * 100)}%)
+            <b>Users not following you back:</b> ${notFollowingBackList.length}
+            (${Math.round((notFollowingBackList.length / followingMap.size) * 100)}%)
+        </p>
+        <p class="text-lg mb-4">
+            <b>Mutual followers:</b> ${mutualFollowersList.length}
         </p>
     `;
 
   resultDiv.innerHTML = "";
   resultDiv.appendChild(statsDiv);
 
-  // Create and display the results table
-  displayResultsTable(followingButNotFollowingBackList, resultDiv);
+  // Create and display the not following back table
+  displayNotFollowingBackTable(notFollowingBackList, resultDiv);
+
+  // Create and display the mutual followers table
+  displayMutualFollowersTable(mutualFollowersList, resultDiv);
 }
 
-function displayResultsTable(notFollowingBackList, resultDiv) {
+// Helper function to format timestamp to readable date
+function formatDate(timestamp) {
+  if (!timestamp) return "Unknown";
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// Helper function to calculate days ago
+function daysAgo(timestamp) {
+  if (!timestamp) return "Unknown";
+  const now = new Date();
+  const then = new Date(timestamp * 1000);
+  const diffTime = Math.abs(now - then);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return `${diffDays} days ago`;
+}
+
+// Helper function to format time delta between two timestamps
+function formatTimeDelta(timestamp1, timestamp2) {
+  if (!timestamp1 || !timestamp2) return "Unknown";
+
+  const diffSeconds = Math.abs(timestamp2 - timestamp1);
+  const diffDays = Math.floor(diffSeconds / (60 * 60 * 24));
+  const diffHours = Math.floor(diffSeconds / (60 * 60));
+  const diffMinutes = Math.floor(diffSeconds / 60);
+
+  if (diffDays > 0) {
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+  } else if (diffHours > 0) {
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''}`;
+  } else {
+    return "less than a minute";
+  }
+}
+
+function displayNotFollowingBackTable(notFollowingBackList, resultDiv) {
+  // Section header
+  const sectionHeader = document.createElement("h2");
+  sectionHeader.classList.add(
+    "text-2xl",
+    "font-bold",
+    "text-center",
+    "mt-8",
+    "mb-4",
+  );
+  sectionHeader.textContent = "Who Doesn't Follow You Back";
+  resultDiv.appendChild(sectionHeader);
+
   // If there are no results, show a message
   if (notFollowingBackList.length === 0) {
     const noResultsDiv = document.createElement("div");
@@ -227,58 +322,13 @@ function displayResultsTable(notFollowingBackList, resultDiv) {
     return;
   }
 
-  const numberWidth = notFollowingBackList.length.toString().length;
-
-  const maxNameLength = Math.max(
-    ...notFollowingBackList.map((name) => name.length),
+  // Sort by oldest follow by default
+  const sortedList = [...notFollowingBackList].sort(
+    (a, b) => (a.timestamp || 0) - (b.timestamp || 0),
   );
-  const nameWidth = Math.min(maxNameLength + 2, 30);
 
-  const table = document.createElement("table");
-  table.classList.add("mx-auto", "text-left", "border-collapse");
-
-  const headerRow = table.insertRow(0);
-
-  const headerCell1 = headerRow.insertCell(0);
-  headerCell1.innerHTML = "#";
-  headerCell1.classList.add(
-    "px-2",
-    "py-2",
-    "bg-blue-500",
-    "text-white",
-    "font-semibold",
-    "text-center",
-  );
-  headerCell1.style.width = `${numberWidth + 2}ch`;
-
-  const headerCell2 = headerRow.insertCell(1);
-  headerCell2.innerHTML = "Username";
-  headerCell2.classList.add(
-    "px-2",
-    "py-2",
-    "bg-blue-500",
-    "text-white",
-    "font-semibold",
-    "text-center",
-  );
-  headerCell2.style.width = `${nameWidth}ch`;
-
-  for (let i = 0; i < notFollowingBackList.length; i++) {
-    const row = table.insertRow(i + 1);
-
-    const cell1 = row.insertCell(0);
-    cell1.innerHTML = i + 1;
-    cell1.classList.add("px-2", "py-2", "border", "text-center");
-    cell1.style.width = `${numberWidth + 2}ch`;
-
-    const cell2 = row.insertCell(1);
-    cell2.innerHTML = notFollowingBackList[i];
-    cell2.classList.add("px-2", "py-2", "border", "text-center");
-    cell2.style.width = `${nameWidth}ch`;
-  }
-
+  // Create table wrapper with controls
   const tableWrapper = document.createElement("div");
-  const totalWidth = numberWidth + nameWidth + 6;
   tableWrapper.classList.add(
     "p-6",
     "bg-gray-50",
@@ -288,10 +338,311 @@ function displayResultsTable(notFollowingBackList, resultDiv) {
     "border-gray-300",
     "my-8",
     "mx-auto",
+    "overflow-x-auto",
   );
-  tableWrapper.style.width = `${totalWidth}ch`;
-  tableWrapper.style.maxWidth = "100%";
+  tableWrapper.style.maxWidth = "95%";
 
+  // Add sort controls
+  const sortControls = document.createElement("div");
+  sortControls.classList.add("mb-4", "text-center");
+  sortControls.innerHTML = `
+    <label class="mr-2 font-semibold">Sort by:</label>
+    <select id="sortNotFollowingBack" class="px-3 py-1 border rounded">
+      <option value="oldest">Oldest Follow</option>
+      <option value="recent">Most Recent Follow</option>
+      <option value="username">Username (A-Z)</option>
+    </select>
+  `;
+  tableWrapper.appendChild(sortControls);
+
+  // Create table
+  const table = document.createElement("table");
+  table.classList.add("w-full", "text-left", "border-collapse");
+  table.id = "notFollowingBackTable";
+
+  // Create header
+  const thead = document.createElement("thead");
+  const headerRow = thead.insertRow();
+  const headers = ["#", "Username", "You Followed", "Profile"];
+
+  headers.forEach((headerText) => {
+    const th = document.createElement("th");
+    th.textContent = headerText;
+    th.classList.add(
+      "px-4",
+      "py-2",
+      "bg-blue-500",
+      "text-white",
+      "font-semibold",
+      "text-center",
+      "border",
+    );
+    headerRow.appendChild(th);
+  });
+
+  table.appendChild(thead);
+
+  // Create tbody
+  const tbody = document.createElement("tbody");
+  tbody.id = "notFollowingBackTableBody";
+
+  function renderTableRows(list) {
+    tbody.innerHTML = "";
+    list.forEach((user, index) => {
+      const row = tbody.insertRow();
+
+      // Number
+      const cell1 = row.insertCell();
+      cell1.textContent = index + 1;
+      cell1.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Username
+      const cell2 = row.insertCell();
+      cell2.textContent = user.username;
+      cell2.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Days ago
+      const cell3 = row.insertCell();
+      cell3.textContent = daysAgo(user.timestamp);
+      cell3.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Profile link
+      const cell4 = row.insertCell();
+      const link = document.createElement("a");
+      link.href = user.href || `https://www.instagram.com/${user.username}`;
+      link.target = "_blank";
+      link.textContent = "View Profile";
+      link.classList.add("text-blue-600", "hover:underline");
+      cell4.appendChild(link);
+      cell4.classList.add("px-4", "py-2", "border", "text-center");
+    });
+  }
+
+  renderTableRows(sortedList);
+  table.appendChild(tbody);
   tableWrapper.appendChild(table);
   resultDiv.appendChild(tableWrapper);
+
+  // Add sort functionality
+  document.getElementById("sortNotFollowingBack").addEventListener("change", (e) => {
+    let sorted;
+    switch (e.target.value) {
+      case "recent":
+        sorted = [...notFollowingBackList].sort(
+          (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
+        );
+        break;
+      case "oldest":
+        sorted = [...notFollowingBackList].sort(
+          (a, b) => (a.timestamp || 0) - (b.timestamp || 0),
+        );
+        break;
+      case "username":
+        sorted = [...notFollowingBackList].sort((a, b) =>
+          a.username.localeCompare(b.username),
+        );
+        break;
+      default:
+        sorted = notFollowingBackList;
+    }
+    renderTableRows(sorted);
+  });
+}
+
+function displayMutualFollowersTable(mutualFollowersList, resultDiv) {
+  // Section header
+  const sectionHeader = document.createElement("h2");
+  sectionHeader.classList.add(
+    "text-2xl",
+    "font-bold",
+    "text-center",
+    "mt-8",
+    "mb-4",
+  );
+  sectionHeader.textContent = "Mutual Followers";
+  resultDiv.appendChild(sectionHeader);
+
+  if (mutualFollowersList.length === 0) {
+    const noResultsDiv = document.createElement("div");
+    noResultsDiv.classList.add(
+      "p-6",
+      "bg-gray-50",
+      "shadow-md",
+      "rounded-md",
+      "border",
+      "border-gray-300",
+      "my-8",
+      "mx-auto",
+      "text-center",
+    );
+    noResultsDiv.innerText = "No mutual followers found.";
+    resultDiv.appendChild(noResultsDiv);
+    return;
+  }
+
+  // Sort by you followed first with largest deltas first
+  const sortedList = [...mutualFollowersList]
+    .filter(
+      (u) =>
+        u.youFollowedTimestamp &&
+        u.theyFollowedTimestamp &&
+        u.youFollowedTimestamp < u.theyFollowedTimestamp,
+    )
+    .sort((a, b) =>
+      (b.theyFollowedTimestamp - b.youFollowedTimestamp) -
+      (a.theyFollowedTimestamp - a.youFollowedTimestamp)
+    );
+
+  // Create table wrapper
+  const tableWrapper = document.createElement("div");
+  tableWrapper.classList.add(
+    "p-6",
+    "bg-gray-50",
+    "shadow-md",
+    "rounded-md",
+    "border",
+    "border-gray-300",
+    "my-8",
+    "mx-auto",
+    "overflow-x-auto",
+  );
+  tableWrapper.style.maxWidth = "95%";
+
+  // Add sort controls
+  const sortControls = document.createElement("div");
+  sortControls.classList.add("mb-4", "text-center");
+  sortControls.innerHTML = `
+    <label class="mr-2 font-semibold">Sort by:</label>
+    <select id="sortMutualFollowers" class="px-3 py-1 border rounded">
+      <option value="you-first">You Followed First</option>
+      <option value="they-first">They Followed First</option>
+    </select>
+  `;
+  tableWrapper.appendChild(sortControls);
+
+  // Create table
+  const table = document.createElement("table");
+  table.classList.add("w-full", "text-left", "border-collapse");
+
+  // Create header
+  const thead = document.createElement("thead");
+  const headerRow = thead.insertRow();
+  const headers = [
+    "#",
+    "Username",
+    "Follow Timeline",
+    "Profile",
+  ];
+
+  headers.forEach((headerText) => {
+    const th = document.createElement("th");
+    th.textContent = headerText;
+    th.classList.add(
+      "px-4",
+      "py-2",
+      "bg-green-500",
+      "text-white",
+      "font-semibold",
+      "text-center",
+      "border",
+    );
+    headerRow.appendChild(th);
+  });
+
+  table.appendChild(thead);
+
+  // Create tbody
+  const tbody = document.createElement("tbody");
+  tbody.id = "mutualFollowersTableBody";
+
+  function renderMutualRows(list) {
+    tbody.innerHTML = "";
+    list.forEach((user, index) => {
+      const row = tbody.insertRow();
+
+      // Number
+      const cell1 = row.insertCell();
+      cell1.textContent = index + 1;
+      cell1.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Username
+      const cell2 = row.insertCell();
+      cell2.textContent = user.username;
+      cell2.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Follow Timeline
+      const cell3 = row.insertCell();
+      if (
+        !user.youFollowedTimestamp ||
+        !user.theyFollowedTimestamp
+      ) {
+        cell3.textContent = "Unknown";
+      } else if (user.youFollowedTimestamp === user.theyFollowedTimestamp) {
+        cell3.textContent = "You followed each other at the same time";
+      } else if (user.youFollowedTimestamp < user.theyFollowedTimestamp) {
+        // You followed first, they followed later
+        const delta = formatTimeDelta(user.youFollowedTimestamp, user.theyFollowedTimestamp);
+        cell3.textContent = `They followed you ${delta} after you followed them`;
+      } else {
+        // They followed first, you followed later
+        const delta = formatTimeDelta(user.theyFollowedTimestamp, user.youFollowedTimestamp);
+        cell3.textContent = `You followed them ${delta} after they followed you`;
+      }
+      cell3.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Profile link
+      const cell4 = row.insertCell();
+      const link = document.createElement("a");
+      link.href = user.href || `https://www.instagram.com/${user.username}`;
+      link.target = "_blank";
+      link.textContent = "View Profile";
+      link.classList.add("text-blue-600", "hover:underline");
+      cell4.appendChild(link);
+      cell4.classList.add("px-4", "py-2", "border", "text-center");
+    });
+  }
+
+  renderMutualRows(sortedList);
+  table.appendChild(tbody);
+  tableWrapper.appendChild(table);
+  resultDiv.appendChild(tableWrapper);
+
+  // Add sort functionality
+  document
+    .getElementById("sortMutualFollowers")
+    .addEventListener("change", (e) => {
+      let sorted;
+      switch (e.target.value) {
+        case "you-first":
+          sorted = [...mutualFollowersList]
+            .filter(
+              (u) =>
+                u.youFollowedTimestamp &&
+                u.theyFollowedTimestamp &&
+                u.youFollowedTimestamp < u.theyFollowedTimestamp,
+            )
+            .sort((a, b) =>
+              (b.theyFollowedTimestamp - b.youFollowedTimestamp) -
+              (a.theyFollowedTimestamp - a.youFollowedTimestamp)
+            );
+          break;
+        case "they-first":
+          sorted = [...mutualFollowersList]
+            .filter(
+              (u) =>
+                u.youFollowedTimestamp &&
+                u.theyFollowedTimestamp &&
+                u.theyFollowedTimestamp < u.youFollowedTimestamp,
+            )
+            .sort(
+              (a, b) =>
+                (b.youFollowedTimestamp - b.theyFollowedTimestamp) -
+                (a.youFollowedTimestamp - a.theyFollowedTimestamp),
+            );
+          break;
+        default:
+          sorted = mutualFollowersList;
+      }
+      renderMutualRows(sorted);
+    });
 }
