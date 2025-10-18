@@ -2,6 +2,32 @@
 let leftFiles = [];
 let rightFiles = [];
 
+// Hidden profiles management
+const HIDDEN_PROFILES_KEY = 'instafollowercheck_hidden_profiles';
+
+function getHiddenProfiles() {
+  const stored = localStorage.getItem(HIDDEN_PROFILES_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+function hideProfile(username) {
+  const hidden = getHiddenProfiles();
+  if (!hidden.includes(username)) {
+    hidden.push(username);
+    localStorage.setItem(HIDDEN_PROFILES_KEY, JSON.stringify(hidden));
+  }
+}
+
+function unhideProfile(username) {
+  const hidden = getHiddenProfiles();
+  const filtered = hidden.filter(u => u !== username);
+  localStorage.setItem(HIDDEN_PROFILES_KEY, JSON.stringify(filtered));
+}
+
+function isProfileHidden(username) {
+  return getHiddenProfiles().includes(username);
+}
+
 function handleMultipleFileUpload(side) {
   const fileInput = document.getElementById(side + "Upload");
   const filesList = document.getElementById(side + "FilesList");
@@ -183,6 +209,9 @@ function processFiles(files, accumulator, callback) {
 function compareUsersAndDisplayResults(followerList, followingList) {
   const resultDiv = document.getElementById("who_doesnt_follow_back");
 
+  // Get hidden profiles
+  const hiddenProfiles = getHiddenProfiles();
+
   // Create maps for quick lookup with all data
   const followersMap = new Map();
   followerList.forEach((item) => {
@@ -199,24 +228,35 @@ function compareUsersAndDisplayResults(followerList, followingList) {
   });
 
   // Find users you follow who don't follow you back
-  const notFollowingBackList = [];
+  const notFollowingBackListAll = [];
+  const notFollowingBackListHidden = [];
   followingMap.forEach((followingUser, username) => {
     if (!followersMap.has(username)) {
-      notFollowingBackList.push(followingUser);
+      if (isProfileHidden(username)) {
+        notFollowingBackListHidden.push(followingUser);
+      } else {
+        notFollowingBackListAll.push(followingUser);
+      }
     }
   });
 
   // Find mutual followers with who followed first data
-  const mutualFollowersList = [];
+  const mutualFollowersListAll = [];
+  const mutualFollowersListHidden = [];
   followingMap.forEach((followingUser, username) => {
     if (followersMap.has(username)) {
       const followerUser = followersMap.get(username);
-      mutualFollowersList.push({
+      const mutualData = {
         username: username,
         youFollowedTimestamp: followingUser.timestamp,
         theyFollowedTimestamp: followerUser.timestamp,
         href: followingUser.href,
-      });
+      };
+      if (isProfileHidden(username)) {
+        mutualFollowersListHidden.push(mutualData);
+      } else {
+        mutualFollowersListAll.push(mutualData);
+      }
     }
   });
 
@@ -224,28 +264,35 @@ function compareUsersAndDisplayResults(followerList, followingList) {
   const statsDiv = document.createElement("div");
   statsDiv.classList.add("mb-6", "text-center");
 
+  const totalHidden = notFollowingBackListHidden.length + mutualFollowersListHidden.length;
+  const hiddenText = totalHidden > 0 ? `<p class="text-sm text-gray-600 mt-2">${totalHidden} profile${totalHidden !== 1 ? 's' : ''} hidden</p>` : '';
+
   statsDiv.innerHTML = `
         <p class="text-lg mb-2">
             <b>Total followers:</b> ${followersMap.size} |
             <b>Total following:</b> ${followingMap.size}
         </p>
         <p class="text-lg mb-4">
-            <b>Users not following you back:</b> ${notFollowingBackList.length}
-            (${Math.round((notFollowingBackList.length / followingMap.size) * 100)}%)
+            <b>Users not following you back:</b> ${notFollowingBackListAll.length}
+            (${followingMap.size > 0 ? Math.round((notFollowingBackListAll.length / followingMap.size) * 100) : 0}%)
         </p>
         <p class="text-lg mb-4">
-            <b>Mutual followers:</b> ${mutualFollowersList.length}
+            <b>Mutual followers:</b> ${mutualFollowersListAll.length}
         </p>
+        ${hiddenText}
     `;
 
   resultDiv.innerHTML = "";
   resultDiv.appendChild(statsDiv);
 
   // Create and display the not following back table
-  displayNotFollowingBackTable(notFollowingBackList, resultDiv);
+  displayNotFollowingBackTable(notFollowingBackListAll, resultDiv);
 
   // Create and display the mutual followers table
-  displayMutualFollowersTable(mutualFollowersList, resultDiv);
+  displayMutualFollowersTable(mutualFollowersListAll, resultDiv);
+
+  // Create and display the hidden profiles section
+  displayHiddenProfilesSection(notFollowingBackListHidden, mutualFollowersListHidden, resultDiv);
 }
 
 // Helper function to format timestamp to readable date
@@ -363,7 +410,7 @@ function displayNotFollowingBackTable(notFollowingBackList, resultDiv) {
   // Create header
   const thead = document.createElement("thead");
   const headerRow = thead.insertRow();
-  const headers = ["#", "Username", "You Followed", "Profile"];
+  const headers = ["#", "Username", "You Followed", "Profile", "Actions"];
 
   headers.forEach((headerText) => {
     const th = document.createElement("th");
@@ -415,6 +462,27 @@ function displayNotFollowingBackTable(notFollowingBackList, resultDiv) {
       link.classList.add("text-blue-600", "hover:underline");
       cell4.appendChild(link);
       cell4.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Hide button
+      const cell5 = row.insertCell();
+      const hideButton = document.createElement("button");
+      hideButton.textContent = "Hide";
+      hideButton.classList.add(
+        "px-3",
+        "py-1",
+        "bg-gray-500",
+        "text-white",
+        "rounded",
+        "hover:bg-gray-600",
+        "text-sm"
+      );
+      hideButton.onclick = () => {
+        hideProfile(user.username);
+        // Re-run the comparison to refresh the display
+        compareFiles();
+      };
+      cell5.appendChild(hideButton);
+      cell5.classList.add("px-4", "py-2", "border", "text-center");
     });
   }
 
@@ -532,6 +600,7 @@ function displayMutualFollowersTable(mutualFollowersList, resultDiv) {
     "Username",
     "Follow Timeline",
     "Profile",
+    "Actions",
   ];
 
   headers.forEach((headerText) => {
@@ -599,6 +668,27 @@ function displayMutualFollowersTable(mutualFollowersList, resultDiv) {
       link.classList.add("text-blue-600", "hover:underline");
       cell4.appendChild(link);
       cell4.classList.add("px-4", "py-2", "border", "text-center");
+
+      // Hide button
+      const cell5 = row.insertCell();
+      const hideButton = document.createElement("button");
+      hideButton.textContent = "Hide";
+      hideButton.classList.add(
+        "px-3",
+        "py-1",
+        "bg-gray-500",
+        "text-white",
+        "rounded",
+        "hover:bg-gray-600",
+        "text-sm"
+      );
+      hideButton.onclick = () => {
+        hideProfile(user.username);
+        // Re-run the comparison to refresh the display
+        compareFiles();
+      };
+      cell5.appendChild(hideButton);
+      cell5.classList.add("px-4", "py-2", "border", "text-center");
     });
   }
 
@@ -645,4 +735,129 @@ function displayMutualFollowersTable(mutualFollowersList, resultDiv) {
       }
       renderMutualRows(sorted);
     });
+}
+
+function displayHiddenProfilesSection(hiddenNotFollowingBack, hiddenMutualFollowers, resultDiv) {
+  const totalHidden = hiddenNotFollowingBack.length + hiddenMutualFollowers.length;
+
+  // Don't show section if no hidden profiles
+  if (totalHidden === 0) {
+    return;
+  }
+
+  // Section header
+  const sectionHeader = document.createElement("h2");
+  sectionHeader.classList.add(
+    "text-2xl",
+    "font-bold",
+    "text-center",
+    "mt-8",
+    "mb-4",
+  );
+  sectionHeader.textContent = `Hidden Profiles (${totalHidden})`;
+  resultDiv.appendChild(sectionHeader);
+
+  // Create table wrapper
+  const tableWrapper = document.createElement("div");
+  tableWrapper.classList.add(
+    "p-6",
+    "bg-gray-50",
+    "shadow-md",
+    "rounded-md",
+    "border",
+    "border-gray-300",
+    "my-8",
+    "mx-auto",
+    "overflow-x-auto",
+  );
+  tableWrapper.style.maxWidth = "95%";
+
+  // Create table
+  const table = document.createElement("table");
+  table.classList.add("w-full", "text-left", "border-collapse");
+
+  // Create header
+  const thead = document.createElement("thead");
+  const headerRow = thead.insertRow();
+  const headers = ["#", "Username", "Type", "Profile", "Actions"];
+
+  headers.forEach((headerText) => {
+    const th = document.createElement("th");
+    th.textContent = headerText;
+    th.classList.add(
+      "px-4",
+      "py-2",
+      "bg-gray-500",
+      "text-white",
+      "font-semibold",
+      "text-center",
+      "border",
+    );
+    headerRow.appendChild(th);
+  });
+
+  table.appendChild(thead);
+
+  // Create tbody
+  const tbody = document.createElement("tbody");
+
+  // Combine both lists with type information
+  const allHidden = [
+    ...hiddenNotFollowingBack.map(u => ({ ...u, type: "Not Following Back" })),
+    ...hiddenMutualFollowers.map(u => ({ ...u, type: "Mutual Follower" }))
+  ];
+
+  allHidden.forEach((user, index) => {
+    const row = tbody.insertRow();
+
+    // Number
+    const cell1 = row.insertCell();
+    cell1.textContent = index + 1;
+    cell1.classList.add("px-4", "py-2", "border", "text-center");
+
+    // Username
+    const cell2 = row.insertCell();
+    cell2.textContent = user.username;
+    cell2.classList.add("px-4", "py-2", "border", "text-center");
+
+    // Type
+    const cell3 = row.insertCell();
+    cell3.textContent = user.type;
+    cell3.classList.add("px-4", "py-2", "border", "text-center");
+
+    // Profile link
+    const cell4 = row.insertCell();
+    const link = document.createElement("a");
+    link.href = user.href || `https://www.instagram.com/${user.username}`;
+    link.target = "_blank";
+    link.textContent = "View Profile";
+    link.classList.add("text-blue-600", "hover:underline");
+    cell4.appendChild(link);
+    cell4.classList.add("px-4", "py-2", "border", "text-center");
+
+    // Unhide button
+    const cell5 = row.insertCell();
+    const unhideButton = document.createElement("button");
+    unhideButton.textContent = "Unhide";
+    unhideButton.classList.add(
+      "px-3",
+      "py-1",
+      "bg-green-500",
+      "text-white",
+      "rounded",
+      "hover:bg-green-600",
+      "text-sm"
+    );
+    unhideButton.onclick = () => {
+      unhideProfile(user.username);
+      // Re-run the comparison to refresh the display
+      compareFiles();
+    };
+    cell5.appendChild(unhideButton);
+    cell5.classList.add("px-4", "py-2", "border", "text-center");
+  });
+
+  table.appendChild(tbody);
+  tableWrapper.appendChild(table);
+  resultDiv.appendChild(tableWrapper);
 }
